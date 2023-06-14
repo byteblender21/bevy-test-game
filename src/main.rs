@@ -12,6 +12,7 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>
 ) {
     // plane
     commands.spawn(PbrBundle {
@@ -19,13 +20,26 @@ fn setup(
         material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
         ..default()
     });
-    // cube
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-        material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-        transform: Transform::from_xyz(0.0, 0.5, 0.0),
-        ..default()
+
+    commands.spawn(SceneBundle {
+        scene: asset_server.load("models/house.gltf#Scene0"),
+        transform: Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3 {
+            x: 0.25,
+            y: 0.25,
+            z: 0.25,
+        }),
+        global_transform: Default::default(),
+        visibility: Default::default(),
+        computed_visibility: Default::default(),
     });
+
+    // cube
+    // commands.spawn(PbrBundle {
+    //     mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
+    //     material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+    //     transform: Transform::from_xyz(0.0, 0.5, 0.0),
+    //     ..default()
+    // });
     // light
     commands.spawn(PointLightBundle {
         point_light: PointLight {
