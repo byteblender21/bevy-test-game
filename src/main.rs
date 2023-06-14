@@ -6,6 +6,13 @@ use hexx::shapes;
 use hexx::*;
 use std::collections::HashMap;
 use std::time::Duration;
+use bevy::a11y::AccessKitEntityExt;
+use bevy::ecs::system::EntityCommands;
+use bevy_mod_picking::event_listening::{Bubble, ListenedEvent, OnPointer};
+use bevy_mod_picking::events::Click;
+use bevy_mod_picking::{DefaultPickingPlugins, PickableBundle};
+use bevy_mod_picking::highlight::DefaultHighlightingPlugin;
+use bevy_mod_picking::prelude::{RaycastPickCamera, RaycastPickTarget};
 use leafwing_input_manager::prelude::*;
 
 /// World size of the hexagons (outer radius)
@@ -30,6 +37,11 @@ struct Player;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .add_plugins(
+            DefaultPickingPlugins
+                .build()
+                .disable::<DefaultHighlightingPlugin>(),
+        )
         // This plugin maps inputs to an input-type agnostic action-state
         // We need to provide it with an enum which stores the possible actions a player could take
         .add_plugin(InputManagerPlugin::<Action>::default())
@@ -57,6 +69,7 @@ fn hexagonal_column(hex_layout: &HexLayout) -> Mesh {
 
 #[derive(Debug, Resource)]
 struct Map {
+    layout: HexLayout,
     entities: HashMap<Hex, Entity>,
     highlighted_material: Handle<StandardMaterial>,
     default_material: Handle<StandardMaterial>,
@@ -79,6 +92,7 @@ fn setup_grid(
         orientation: HexOrientation::flat(),
         ..default()
     };
+
     // materials
     let default_material = materials.add(Color::WHITE.into());
     let highlighted_material = materials.add(Color::YELLOW.into());
@@ -90,39 +104,45 @@ fn setup_grid(
         .map(|hex| {
             let pos = layout.hex_to_world_pos(hex);
             let id = commands
-                .spawn(PbrBundle {
-                    transform: Transform::from_xyz(pos.x, -0.2, pos.y)
-                        .with_scale(Vec3::new(1.0, 0.1, 1.0)),
-                    mesh: mesh_handle.clone(),
-                    material: default_material.clone(),
-                    ..default()
-                })
+                .spawn((
+                    PbrBundle {
+                        transform: Transform::from_xyz(pos.x, -0.2, pos.y)
+                            .with_scale(Vec3::new(1.0, 0.1, 1.0)),
+                        mesh: mesh_handle.clone(),
+                        material: default_material.clone(),
+                        ..default()
+                    },
+                    PickableBundle::default(),
+                    RaycastPickTarget::default(),
+                    OnPointer::<Click>::run_callback(animate_rings),
+                ))
                 .id();
             (hex, id)
         })
         .collect();
     commands.insert_resource(Map {
+        layout,
         entities,
         highlighted_material,
         default_material,
     });
 }
 
+fn animate_rings(
+    In(event): In<ListenedEvent<Click>>,
+    mut commands: Commands,
+    map: Res<Map>,
+    mut highlighted_hexes: Local<HighlightedHexes>,
+) -> Bubble {
+    commands.entity(event.target).insert(map.highlighted_material.clone());
+    return Bubble::Burst;
+}
+
 /// set up a simple 3D scene
 fn setup(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    asset_server: Res<AssetServer>
+    asset_server: Res<AssetServer>,
 ) {
-    // plane
-    // commands.spawn(PbrBundle {
-    //     mesh: meshes.add(shape::Plane::from_size(5.0).into()),
-    //     material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
-    //     ..default()
-    // });
-    // plane
-
     commands.spawn(SceneBundle {
         scene: asset_server.load("models/house.gltf#Scene0"),
         transform: Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3 {
@@ -144,15 +164,18 @@ fn setup(
         ..default()
     });
     // camera
-    commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    });
+    commands.spawn((
+        Camera3dBundle {
+            transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+            ..default()
+        },
+        RaycastPickCamera::default(), )
+    );
 }
 
 fn spawn_player(mut commands: Commands,
                 mut meshes: ResMut<Assets<Mesh>>,
-                mut materials: ResMut<Assets<StandardMaterial>>,) {
+                mut materials: ResMut<Assets<StandardMaterial>>, ) {
     commands
         .spawn(InputManagerBundle::<Action> {
             // Stores "which actions are currently pressed"
