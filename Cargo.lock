@@ -1515,6 +1515,7 @@ name = "game-with-bevy"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "hexx",
  "leafwing-input-manager",
 ]
 
@@ -1746,6 +1747,15 @@ name = "hexf-parse"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dfa686283ad6dd069f105e5ab091b04c62850d3e4cf5d67debad1933f55023df"
+
+[[package]]
+name = "hexx"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0be51257d0d1c946ab563ab8293fbe104e12149bc917ac70104fa113c42ee00"
+dependencies = [
+ "glam",
+]
 
 [[package]]
 name = "image"
