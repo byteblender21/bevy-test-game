@@ -11,6 +11,7 @@ use bevy::ecs::system::EntityCommands;
 use bevy_mod_picking::event_listening::{Bubble, ListenedEvent, OnPointer};
 use bevy_mod_picking::events::Click;
 use bevy_mod_picking::{DefaultPickingPlugins, PickableBundle};
+use bevy_mod_picking::debug::DebugPickingPlugin;
 use bevy_mod_picking::highlight::DefaultHighlightingPlugin;
 use bevy_mod_picking::prelude::{RaycastPickCamera, RaycastPickTarget};
 use leafwing_input_manager::prelude::*;
@@ -40,7 +41,8 @@ fn main() {
         .add_plugins(
             DefaultPickingPlugins
                 .build()
-                .disable::<DefaultHighlightingPlugin>(),
+                .disable::<DefaultHighlightingPlugin>()
+                .disable::<DebugPickingPlugin>(),
         )
         // This plugin maps inputs to an input-type agnostic action-state
         // We need to provide it with an enum which stores the possible actions a player could take
