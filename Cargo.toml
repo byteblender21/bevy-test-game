@@ -15,6 +15,7 @@ opt-level = 3
 
 [dependencies]
 bevy = { version = "0.10.1", features = ["dynamic_linking"] }
+rand = "0.8.5"
 leafwing-input-manager = "0.9.2"
 hexx = "0.6"
 bevy_mod_picking = "0.13.0"

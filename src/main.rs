@@ -15,6 +15,7 @@ use bevy_mod_picking::debug::DebugPickingPlugin;
 use bevy_mod_picking::highlight::DefaultHighlightingPlugin;
 use bevy_mod_picking::prelude::{RaycastPickCamera, RaycastPickTarget};
 use leafwing_input_manager::prelude::*;
+use rand::Rng;
 
 /// World size of the hexagons (outer radius)
 const HEX_SIZE: Vec2 = Vec2::splat(1.0);
@@ -50,7 +51,7 @@ fn main() {
         // The InputMap and ActionState components will be added to any entity with the Player component
         .add_startup_system(spawn_player)
         // Read the ActionState in your systems using queries!
-        .add_system(jump)
+        // .add_system(jump)
         // setup env
         .add_startup_system(setup)
         .add_startup_system(setup_grid)
@@ -90,7 +91,7 @@ fn setup_grid(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let layout = HexLayout {
-        hex_size: Vec2::new(0.1, 0.1),
+        hex_size: Vec2::new(0.3, 0.3),
         orientation: HexOrientation::flat(),
         ..default()
     };
@@ -102,7 +103,7 @@ fn setup_grid(
     let mesh = hexagonal_column(&layout);
     let mesh_handle = meshes.add(mesh);
 
-    let entities = shapes::hexagon(Hex::ZERO, 20)
+    let entities = shapes::hexagon(Hex::ZERO, 100)
         .map(|hex| {
             let pos = layout.hex_to_world_pos(hex);
             let id = commands
@@ -116,25 +117,60 @@ fn setup_grid(
                     },
                     PickableBundle::default(),
                     RaycastPickTarget::default(),
-                    OnPointer::<Click>::run_callback(animate_rings),
+                    OnPointer::<Click>::run_callback(on_hex_clicked),
                 ))
                 .id();
             (hex, id)
         })
         .collect();
-    commands.insert_resource(Map {
+
+    let map_resource = Map {
         layout,
         entities,
         highlighted_material,
         default_material,
-    });
+    };
+
+    spawn_stuff(&map_resource, &mut meshes, &mut materials, &mut commands);
+
+    commands.insert_resource(map_resource);
 }
 
-fn animate_rings(
+fn spawn_stuff(map: &Map,
+               meshes: &mut ResMut<Assets<Mesh>>,
+               materials: &mut ResMut<Assets<StandardMaterial>>,
+               commands: &mut Commands,
+) {
+    let mut rng = rand::thread_rng();
+
+    let keys = map.entities.keys().cloned().collect::<Vec<Hex>>();
+
+    for _ in 1..10 {
+        let key = keys.get(rng.gen_range(0..keys.len()+1)).unwrap();
+        let entity = map.entities.get(key).unwrap();
+        let pos = map.layout.hex_to_world_pos(*key);
+
+        commands.entity(*entity).insert(map.highlighted_material.clone());
+        commands
+            .spawn((
+                PbrBundle {
+                    mesh: meshes.add(Mesh::from(shape::Capsule {
+                        radius: 0.1,
+                        depth: 0.4,
+                        ..default()
+                    })),
+                    material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+                    transform: Transform::from_xyz(pos.x, 0.1, pos.y),
+                    ..default()
+                },
+            ));
+    }
+}
+
+fn on_hex_clicked(
     In(event): In<ListenedEvent<Click>>,
     mut commands: Commands,
     map: Res<Map>,
-    mut highlighted_hexes: Local<HighlightedHexes>,
 ) -> Bubble {
     commands.entity(event.target).insert(map.highlighted_material.clone());
     return Bubble::Burst;
@@ -145,15 +181,15 @@ fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
-    commands.spawn(SceneBundle {
-        scene: asset_server.load("models/house.gltf#Scene0"),
-        transform: Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3 {
-            x: 0.25,
-            y: 0.25,
-            z: 0.25,
-        }),
-        ..default()
-    });
+    // commands.spawn(SceneBundle {
+    //     scene: asset_server.load("models/house.gltf#Scene0"),
+    //     transform: Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3 {
+    //         x: 0.25,
+    //         y: 0.25,
+    //         z: 0.25,
+    //     }),
+    //     ..default()
+    // });
 
     // light
     commands.spawn(PointLightBundle {
@@ -178,24 +214,24 @@ fn setup(
 fn spawn_player(mut commands: Commands,
                 mut meshes: ResMut<Assets<Mesh>>,
                 mut materials: ResMut<Assets<StandardMaterial>>, ) {
-    commands
-        .spawn(InputManagerBundle::<Action> {
-            // Stores "which actions are currently pressed"
-            action_state: ActionState::default(),
-            // Describes how to convert from player inputs into those actions
-            input_map: InputMap::new([(KeyCode::Space, Action::Jump)]),
-        })
-        .insert(PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Capsule {
-                radius: 0.1,
-                depth: 0.4,
-                ..default()
-            })),
-            material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-            transform: Transform::from_xyz(0.0, 0.3, 0.5),
-            ..default()
-        })
-        .insert(Player);
+    // commands
+    //     .spawn(InputManagerBundle::<Action> {
+    //         // Stores "which actions are currently pressed"
+    //         action_state: ActionState::default(),
+    //         // Describes how to convert from player inputs into those actions
+    //         input_map: InputMap::new([(KeyCode::Space, Action::Jump)]),
+    //     })
+    //     .insert(PbrBundle {
+    //         mesh: meshes.add(Mesh::from(shape::Capsule {
+    //             radius: 0.1,
+    //             depth: 0.4,
+    //             ..default()
+    //         })),
+    //         material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+    //         transform: Transform::from_xyz(0.0, 0.3, 0.5),
+    //         ..default()
+    //     })
+    //     .insert(Player);
 }
 
 // Query for the `ActionState` component in your game logic systems!
@@ -203,7 +239,6 @@ fn jump(mut query: Query<(&ActionState<Action>, &mut Transform), With<Player>>) 
     let (action_state, mut transform) = query.single_mut();
     // Each action has a button-like state of its own that you can check
     if action_state.just_pressed(Action::Jump) {
-        println!("I'm jumping!");
         transform.translation.y += 0.3;
     }
 }
