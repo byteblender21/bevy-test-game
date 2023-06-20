@@ -196,7 +196,7 @@ fn setup(
     // light
     commands.spawn(PointLightBundle {
         point_light: PointLight {
-            intensity: 1500.0,
+            intensity: 4500.0,
             shadows_enabled: true,
             ..default()
         },
@@ -264,7 +264,7 @@ fn setup(
         });
 }
 
-const ACCELERATION: f32 = 0.5;
+const ACCELERATION: f32 = 0.2;
 
 // Query for the `ActionState` component in your game logic systems!
 fn move_camera(mut query: Query<(&ActionState<Action>, &mut Transform), With<PlayerCamera>>) {
