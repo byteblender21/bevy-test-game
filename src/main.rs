@@ -1,3 +1,6 @@
+mod ui;
+mod state;
+
 use bevy::prelude::*;
 use bevy::render::mesh::Indices;
 use bevy::render::render_resource::PrimitiveTopology;
@@ -18,6 +21,7 @@ use leafwing_input_manager::buttonlike::MouseMotionDirection;
 use leafwing_input_manager::prelude::*;
 use leafwing_input_manager::user_input::InputKind;
 use rand::Rng;
+use crate::ui::menu::GameMenuPlugin;
 
 /// World size of the hexagons (outer radius)
 const HEX_SIZE: Vec2 = Vec2::splat(1.0);
@@ -38,11 +42,18 @@ enum Action {
     MoveBack,
 }
 
+// This is the list of "things in the game I want to be able to do based on input"
+#[derive(Actionlike, PartialEq, Eq, Clone, Copy, Hash, Debug)]
+enum UiAction {
+    OpenMenu,
+}
+
 #[derive(Component)]
 struct PlayerCamera;
 
 fn main() {
     App::new()
+        .add_plugin(GameMenuPlugin)
         .add_plugins(DefaultPlugins)
         .add_plugins(
             DefaultPickingPlugins
