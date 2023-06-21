@@ -8,6 +8,7 @@ use bevy::time::common_conditions::on_timer;
 use hexx::shapes;
 use hexx::*;
 use std::collections::HashMap;
+use std::f32::consts::PI;
 use std::time::Duration;
 use bevy::a11y::AccessKitEntityExt;
 use bevy::ecs::system::EntityCommands;
@@ -107,6 +108,20 @@ fn setup_grid(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    commands.spawn(DirectionalLightBundle {
+        directional_light: DirectionalLight {
+            shadows_enabled: true,
+            ..default()
+        },
+        transform: Transform {
+            translation: Vec3::new(0.0, 2.0, 0.0),
+            rotation: Quat::from_rotation_x(-PI / 4.),
+            ..default()
+        },
+        ..default()
+    });
+
+
     let layout = HexLayout {
         hex_size: Vec2::new(0.3, 0.3),
         orientation: HexOrientation::flat(),
@@ -207,18 +222,6 @@ fn setup(
     //     }),
     //     ..default()
     // });
-
-    // light
-    commands.spawn(PointLightBundle {
-        point_light: PointLight {
-            intensity: 4500.0,
-            shadows_enabled: true,
-            ..default()
-        },
-        transform: Transform::from_xyz(4.0, 8.0, 4.0),
-        ..default()
-    });
-    // camera
 
     let mut input_map = InputMap::new(
         [
