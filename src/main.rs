@@ -23,6 +23,7 @@ use leafwing_input_manager::prelude::*;
 use leafwing_input_manager::user_input::InputKind;
 use rand::Rng;
 use crate::ui::menu::{GameMenu, GameMenuPlugin, resource_not_exists};
+use crate::ui::player::PlayerUiPlugin;
 
 /// World size of the hexagons (outer radius)
 const HEX_SIZE: Vec2 = Vec2::splat(1.0);
@@ -56,6 +57,7 @@ struct PlayerCamera;
 fn main() {
     App::new()
         .add_plugin(GameMenuPlugin)
+        .add_plugin(PlayerUiPlugin)
         .add_plugins(DefaultPlugins)
         .add_plugins(
             DefaultPickingPlugins
