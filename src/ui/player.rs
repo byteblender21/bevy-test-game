@@ -67,7 +67,7 @@ fn setup_ui(mut commands: Commands,
                                     "Text Example",
                                     TextStyle {
                                         font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                                        font_size: 30.0,
+                                        font_size: 17.0,
                                         color: Color::WHITE,
                                     },
                                 )
