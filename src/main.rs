@@ -68,7 +68,7 @@ fn main() {
         .add_plugin(InputManagerPlugin::<Action>::default())
         .add_system(
             move_camera
-                    .run_if(resource_not_exists::<GameMenu>())
+                .run_if(resource_not_exists::<GameMenu>())
         )
         // setup env
         .add_startup_system(setup)
@@ -288,19 +288,17 @@ const ACCELERATION: f32 = 0.9;
 fn move_camera(
     time: Res<Time>,
     mut query: Query<(&ActionState<Action>, &mut Transform), With<PlayerCamera>>,
-    ) {
+) {
     let (action_state, mut transform) = query.single_mut();
     if action_state.pressed(Action::MoveLeft) {
         transform.translation.x -= (ACCELERATION * time.delta_seconds());
-    }
-    else if action_state.pressed(Action::MoveRight) {
+    } else if action_state.pressed(Action::MoveRight) {
         transform.translation.x += (ACCELERATION * time.delta_seconds());
     }
 
     if action_state.pressed(Action::MoveForward) {
         transform.translation.z -= (ACCELERATION * time.delta_seconds());
-    }
-    else if action_state.pressed(Action::MoveBack) {
+    } else if action_state.pressed(Action::MoveBack) {
         transform.translation.z += (ACCELERATION * time.delta_seconds());
     }
 }
