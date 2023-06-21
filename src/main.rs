@@ -135,7 +135,7 @@ fn setup_grid(
     let mesh = hexagonal_column(&layout);
     let mesh_handle = meshes.add(mesh);
 
-    let entities = shapes::hexagon(Hex::ZERO, 100)
+    let entities = shapes::hexagon(Hex::ZERO, 10)
         .map(|hex| {
             let pos = layout.hex_to_world_pos(hex);
             let id = commands
@@ -282,22 +282,25 @@ fn setup(
         });
 }
 
-const ACCELERATION: f32 = 0.2;
+const ACCELERATION: f32 = 0.9;
 
 // Query for the `ActionState` component in your game logic systems!
-fn move_camera(mut query: Query<(&ActionState<Action>, &mut Transform), With<PlayerCamera>>) {
+fn move_camera(
+    time: Res<Time>,
+    mut query: Query<(&ActionState<Action>, &mut Transform), With<PlayerCamera>>,
+    ) {
     let (action_state, mut transform) = query.single_mut();
     if action_state.pressed(Action::MoveLeft) {
-        transform.translation.x -= ACCELERATION;
+        transform.translation.x -= (ACCELERATION * time.delta_seconds());
     }
     else if action_state.pressed(Action::MoveRight) {
-        transform.translation.x += ACCELERATION;
+        transform.translation.x += (ACCELERATION * time.delta_seconds());
     }
 
     if action_state.pressed(Action::MoveForward) {
-        transform.translation.z -= ACCELERATION;
+        transform.translation.z -= (ACCELERATION * time.delta_seconds());
     }
     else if action_state.pressed(Action::MoveBack) {
-        transform.translation.z += ACCELERATION;
+        transform.translation.z += (ACCELERATION * time.delta_seconds());
     }
 }
