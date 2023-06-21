@@ -21,7 +21,7 @@ use leafwing_input_manager::buttonlike::MouseMotionDirection;
 use leafwing_input_manager::prelude::*;
 use leafwing_input_manager::user_input::InputKind;
 use rand::Rng;
-use crate::ui::menu::GameMenuPlugin;
+use crate::ui::menu::{GameMenu, GameMenuPlugin, resource_not_exists};
 
 /// World size of the hexagons (outer radius)
 const HEX_SIZE: Vec2 = Vec2::splat(1.0);
@@ -46,6 +46,7 @@ enum Action {
 #[derive(Actionlike, PartialEq, Eq, Clone, Copy, Hash, Debug)]
 enum UiAction {
     OpenMenu,
+    CloseMenu,
 }
 
 #[derive(Component)]
@@ -64,7 +65,10 @@ fn main() {
         // This plugin maps inputs to an input-type agnostic action-state
         // We need to provide it with an enum which stores the possible actions a player could take
         .add_plugin(InputManagerPlugin::<Action>::default())
-        .add_system(move_camera)
+        .add_system(
+            move_camera
+                    .run_if(resource_not_exists::<GameMenu>())
+        )
         // setup env
         .add_startup_system(setup)
         .add_startup_system(setup_grid)

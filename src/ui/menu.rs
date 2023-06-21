@@ -6,11 +6,14 @@ use leafwing_input_manager::prelude::*;
 use crate::UiAction;
 
 #[derive(Resource)]
-struct GameMenu;
+pub struct GameMenu;
+
+#[derive(Component)]
+struct GameMenuCmp;
 
 pub struct GameMenuPlugin;
 
-fn resource_not_exists<T>() -> impl FnMut(Option<Res<T>>) -> bool + Clone
+pub fn resource_not_exists<T>() -> impl FnMut(Option<Res<T>>) -> bool + Clone
     where
         T: Resource,
 {
@@ -27,14 +30,22 @@ impl Plugin for GameMenuPlugin {
                     .run_if(resource_not_exists::<GameMenu>())
             )
             .add_system(
+                handle_menu_actions
+                    .run_if(resource_exists::<GameMenu>())
+            )
+            .add_system(
                 render_game_menu
                     .run_if(resource_added::<GameMenu>())
+            )
+            .add_system(
+                remove_game_menu
+                    .run_if(resource_removed::<GameMenu>())
             )
         ;
     }
 }
 
-fn setup_menu_keyboard(mut commands: Commands,) {
+fn setup_menu_keyboard(mut commands: Commands) {
     commands.spawn(InputManagerBundle::<UiAction> {
         // Stores "which actions are currently pressed"
         action_state: ActionState::default(),
@@ -42,6 +53,7 @@ fn setup_menu_keyboard(mut commands: Commands,) {
         input_map: InputMap::new(
             [
                 (KeyCode::Space, UiAction::OpenMenu),
+                (KeyCode::Escape, UiAction::CloseMenu),
             ]
         ),
     });
@@ -53,12 +65,24 @@ fn handle_actions(mut commands: Commands, query: Query<&ActionState<UiAction>>) 
     }
 }
 
+fn handle_menu_actions(mut commands: Commands, query: Query<&ActionState<UiAction>>) {
+    if query.single().pressed(UiAction::CloseMenu) {
+        commands.remove_resource::<GameMenu>();
+    }
+}
+
 const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
 const HOVERED_BUTTON: Color = Color::rgb(0.25, 0.25, 0.25);
 const PRESSED_BUTTON: Color = Color::rgb(0.35, 0.75, 0.35);
 
+fn remove_game_menu(mut commands: Commands,
+                    q: Query<Entity, With<GameMenuCmp>>, ) {
+    for entity in q.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
+}
+
 fn render_game_menu(mut commands: Commands, asset_server: Res<AssetServer>, current_state: Res<GameMenu>) {
-    println!("Activate menu");
     commands
         .spawn(NodeBundle {
             style: Style {
@@ -69,6 +93,7 @@ fn render_game_menu(mut commands: Commands, asset_server: Res<AssetServer>, curr
             },
             ..default()
         })
+        .insert(GameMenuCmp)
         .with_children(|parent| {
             parent
                 .spawn(ButtonBundle {
