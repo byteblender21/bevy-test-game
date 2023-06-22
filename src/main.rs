@@ -18,6 +18,7 @@ use bevy_mod_picking::{DefaultPickingPlugins, PickableBundle};
 use bevy_mod_picking::debug::DebugPickingPlugin;
 use bevy_mod_picking::highlight::DefaultHighlightingPlugin;
 use bevy_mod_picking::prelude::{RaycastPickCamera, RaycastPickTarget};
+use hexx::algorithms::a_star;
 use leafwing_input_manager::buttonlike::MouseMotionDirection;
 use leafwing_input_manager::prelude::*;
 use leafwing_input_manager::user_input::InputKind;
@@ -54,6 +55,19 @@ enum UiAction {
 #[derive(Component)]
 struct PlayerCamera;
 
+#[derive(Component)]
+struct HexLocation {
+    location: Hex
+}
+
+#[derive(Resource)]
+struct RoutePlanner {
+    obj1: Option<Entity>,
+    obj2: Option<Entity>,
+}
+
+struct RouteChosenEvent;
+
 fn main() {
     App::new()
         .add_plugin(GameMenuPlugin)
@@ -71,6 +85,11 @@ fn main() {
         .add_system(
             move_camera
                 .run_if(resource_not_exists::<GameMenu>())
+        )
+        .add_event::<RouteChosenEvent>()
+        .add_system(
+            listen_for_route_planning
+                .run_if(resource_exists::<RoutePlanner>())
         )
         // setup env
         .add_startup_system(setup)
@@ -168,6 +187,7 @@ fn setup_grid(
     spawn_stuff(&map_resource, &mut meshes, &mut materials, &mut commands);
 
     commands.insert_resource(map_resource);
+    commands.insert_resource(RoutePlanner { obj1: None, obj2: None });
 }
 
 fn spawn_stuff(map: &Map,
@@ -197,6 +217,10 @@ fn spawn_stuff(map: &Map,
                     transform: Transform::from_xyz(pos.x, 0.1, pos.y),
                     ..default()
                 },
+                HexLocation { location: key.clone() },
+                PickableBundle::default(),
+                RaycastPickTarget::default(),
+                OnPointer::<Click>::run_callback(on_object_clicked),
             ));
     }
 }
@@ -208,6 +232,41 @@ fn on_hex_clicked(
 ) -> Bubble {
     commands.entity(event.target).insert(map.highlighted_material.clone());
     return Bubble::Burst;
+}
+
+fn on_object_clicked(
+    In(event): In<ListenedEvent<Click>>,
+    mut commands: Commands,
+    map: Res<Map>,
+    mut planner: ResMut<RoutePlanner>,
+    mut planner_event_writer: EventWriter<RouteChosenEvent>
+) -> Bubble {
+    commands.entity(event.target).insert(map.highlighted_material.clone());
+
+    if planner.obj1.is_none() {
+        planner.obj1 = Some(event.target);
+    } else {
+        planner.obj2 = Some(event.target);
+
+        planner_event_writer.send(RouteChosenEvent);
+
+        // a_star()
+
+    }
+
+    return Bubble::Burst;
+}
+
+fn listen_for_route_planning(
+    mut planner: ResMut<RoutePlanner>,
+    mut events: EventReader<RouteChosenEvent>
+) {
+    for event in events.iter() {
+        println!("Plan");
+
+        planner.obj1 = None;
+        planner.obj2 = None;
+    }
 }
 
 /// set up a simple 3D scene
