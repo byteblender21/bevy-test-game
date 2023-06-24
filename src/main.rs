@@ -1,32 +1,34 @@
-mod ui;
-mod state;
-
-use bevy::prelude::*;
-use bevy::render::mesh::Indices;
-use bevy::render::render_resource::PrimitiveTopology;
-use bevy::time::common_conditions::on_timer;
-use hexx::shapes;
-use hexx::*;
 use std::collections::HashMap;
 use std::f32::consts::PI;
 use std::time::Duration;
+
 use bevy::a11y::AccessKitEntityExt;
 use bevy::ecs::archetype::Archetypes;
 use bevy::ecs::component::ComponentId;
 use bevy::ecs::system::EntityCommands;
-use bevy_mod_picking::event_listening::{Bubble, ListenedEvent, OnPointer};
-use bevy_mod_picking::events::Click;
+use bevy::prelude::*;
+use bevy::render::mesh::Indices;
+use bevy::render::render_resource::PrimitiveTopology;
+use bevy::time::common_conditions::on_timer;
 use bevy_mod_picking::{DefaultPickingPlugins, PickableBundle};
 use bevy_mod_picking::debug::DebugPickingPlugin;
+use bevy_mod_picking::event_listening::{Bubble, ListenedEvent, OnPointer};
+use bevy_mod_picking::events::Click;
 use bevy_mod_picking::highlight::DefaultHighlightingPlugin;
 use bevy_mod_picking::prelude::{RaycastPickCamera, RaycastPickTarget};
+use hexx::*;
 use hexx::algorithms::a_star;
+use hexx::shapes;
 use leafwing_input_manager::buttonlike::MouseMotionDirection;
 use leafwing_input_manager::prelude::*;
 use leafwing_input_manager::user_input::InputKind;
 use rand::Rng;
+
 use crate::ui::menu::{GameMenu, GameMenuPlugin, resource_not_exists};
 use crate::ui::player::PlayerUiPlugin;
+
+mod ui;
+mod state;
 
 /// World size of the hexagons (outer radius)
 const HEX_SIZE: Vec2 = Vec2::splat(1.0);
