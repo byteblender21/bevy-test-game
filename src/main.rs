@@ -11,6 +11,8 @@ use std::collections::HashMap;
 use std::f32::consts::PI;
 use std::time::Duration;
 use bevy::a11y::AccessKitEntityExt;
+use bevy::ecs::archetype::Archetypes;
+use bevy::ecs::component::ComponentId;
 use bevy::ecs::system::EntityCommands;
 use bevy_mod_picking::event_listening::{Bubble, ListenedEvent, OnPointer};
 use bevy_mod_picking::events::Click;
@@ -55,7 +57,7 @@ enum UiAction {
 #[derive(Component)]
 struct PlayerCamera;
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 struct HexLocation {
     location: Hex
 }
@@ -247,27 +249,46 @@ fn on_object_clicked(
         planner.obj1 = Some(event.target);
     } else {
         planner.obj2 = Some(event.target);
-
         planner_event_writer.send(RouteChosenEvent);
-
-        // a_star()
-
     }
 
     return Bubble::Burst;
 }
 
 fn listen_for_route_planning(
+    mut commands: Commands,
+    map: Res<Map>,
     mut planner: ResMut<RoutePlanner>,
-    mut events: EventReader<RouteChosenEvent>
+    mut events: EventReader<RouteChosenEvent>,
+    hex_query: Query<&HexLocation>,
 ) {
     for event in events.iter() {
-        println!("Plan");
+        let start_location = hex_query.get(planner.obj1.unwrap()).unwrap();
+        let end_location = hex_query.get(planner.obj2.unwrap()).unwrap();
+
+        let path = a_star(start_location.location, end_location.location, |h| Some(1));
+        if let Some(hex_fields) = path {
+            hex_fields.iter().for_each(|pos| {
+                commands.entity(*map.entities.get(pos).unwrap()).insert(map.highlighted_material.clone());
+            })
+        }
 
         planner.obj1 = None;
         planner.obj2 = None;
     }
 }
+
+// fn get_components_for_entity<'a>(
+//     entity: &Entity,
+//     archetypes: &'a Archetypes,
+// ) -> Option<impl Iterator<Item = ComponentId> + 'a> {
+//     for archetype in archetypes.iter() {
+//         if archetype.entities().iter().any(|e| e.entity() == entity) {
+//             return Some(archetype.components());
+//         }
+//     }
+//     None
+// }
 
 /// set up a simple 3D scene
 fn setup(
