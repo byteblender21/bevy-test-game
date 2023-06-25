@@ -1,8 +1,10 @@
+use std::slice::Windows;
 use bevy::app::{App, Plugin};
+use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 use bevy::window::WindowResized;
 use bevy_mod_picking::PickableBundle;
-use bevy_mod_picking::prelude::{Bubble, Click, ListenedEvent, OnPointer, RaycastPickTarget};
+use bevy_mod_picking::prelude::{Bubble, Click, ListenedEvent, OnPointer, PointerLocation, RaycastPickTarget};
 
 pub struct PlayerUiPlugin;
 
@@ -14,15 +16,22 @@ impl Plugin for PlayerUiPlugin {
             .add_event::<ButtonClickEvent>()
             .add_startup_system(setup_ui)
             .add_system(on_resize_system)
-            .add_system(on_click)
+            .add_system(on_building_button_clicked)
+            .add_system(
+                show_building_to_place
+                        .run_if(resource_exists::<BuildingPlacement>())
+            )
         ;
     }
 }
 
-const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
-
 #[derive(Component)]
 struct ChangingUiPart;
+
+#[derive(Resource)]
+struct BuildingPlacement {
+    building: Entity
+}
 
 fn setup_ui(
     mut commands: Commands,
@@ -112,11 +121,43 @@ fn setup_ui(
         });
 }
 
-fn on_click(mut interaction_query: Query<&Interaction, (Changed<Interaction>, With<Button>)>) {
-    for interaction in interaction_query {
+fn show_building_to_place(
+    mut commands: Commands,
+    pointers: Query<'_, '_, &PointerLocation, ()>,
+    placement: Res<BuildingPlacement>
+) {
+    let pointer = pointers.single();
+    let cursor = pointer.location.clone().unwrap().position;
+    commands.entity(placement.building).insert(Transform::from_xyz(cursor.x, 0.1, cursor.y));
+}
+
+fn on_building_button_clicked(
+    mut commands: Commands,
+    mut interaction_query: Query<&Interaction, (Changed<Interaction>, With<Button>)>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    for interaction in &mut interaction_query {
         match *interaction {
             Interaction::Clicked => {
-                println!("on clicked");
+
+                let entity = commands
+                    .spawn((
+                        PbrBundle {
+                            mesh: meshes.add(Mesh::from(shape::Capsule {
+                                radius: 0.1,
+                                depth: 0.4,
+                                ..default()
+                            })),
+                            material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+                            transform: Transform::from_xyz(0.0, 0.1, 0.0),
+                            ..default()
+                        },
+                    )).id();
+
+                commands.insert_resource(BuildingPlacement {
+                    building: entity
+                });
             }
             _ => {}
         }
