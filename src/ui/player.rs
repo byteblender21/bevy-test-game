@@ -1,8 +1,11 @@
 use std::slice::Windows;
+
 use bevy::app::{App, Plugin};
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 use bevy::window::WindowResized;
+use bevy_mod_picking::debug::PointerDebug;
+use bevy_mod_picking::focus::HoverMap;
 use bevy_mod_picking::PickableBundle;
 use bevy_mod_picking::prelude::{Bubble, Click, ListenedEvent, OnPointer, PointerLocation, RaycastPickTarget};
 
@@ -123,12 +126,15 @@ fn setup_ui(
 
 fn show_building_to_place(
     mut commands: Commands,
-    pointers: Query<'_, '_, &PointerLocation, ()>,
+    hover_map: Res<HoverMap>,
     placement: Res<BuildingPlacement>
 ) {
-    let pointer = pointers.single();
-    let cursor = pointer.location.clone().unwrap().position;
-    commands.entity(placement.building).insert(Transform::from_xyz(cursor.x, 0.1, cursor.y));
+    if let Some((_, hit_data)) = hover_map.0.iter().next() {
+        if let Some(hit_value) = hit_data.values().next() {
+            let pos = hit_value.position.unwrap();
+            commands.entity(placement.building).insert(Transform::from_xyz(pos.x, 0.1, pos.z));
+        }
+    }
 }
 
 fn on_building_button_clicked(
