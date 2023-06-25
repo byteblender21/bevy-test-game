@@ -14,9 +14,12 @@ impl Plugin for PlayerUiPlugin {
             .add_event::<ButtonClickEvent>()
             .add_startup_system(setup_ui)
             .add_system(on_resize_system)
+            .add_system(on_click)
         ;
     }
 }
+
+const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
 
 #[derive(Component)]
 struct ChangingUiPart;
@@ -88,27 +91,36 @@ fn setup_ui(
                                 Label,
                             ));
 
-                            parent.spawn((
-                                ImageBundle {
+                            parent
+                                .spawn(ButtonBundle {
+                                    style: Style {
+                                        size: Size::new(Val::Px(150.0), Val::Px(65.0)),
+                                        // horizontally center child text
+                                        justify_content: JustifyContent::Center,
+                                        // vertically center child text
+                                        align_items: AlignItems::Center,
+                                        ..default()
+                                    },
                                     image: UiImage {
                                         texture: asset_server.load("images/button-01.png"),
                                         ..default()
                                     },
                                     ..default()
-                                },
-                                PickableBundle::default(),
-                                RaycastPickTarget::default(),
-                                OnPointer::<Click>::run_callback(
-                                    |In(_): In<ListenedEvent<Click>>,
-                                     mut event_writer: EventWriter<ButtonClickEvent>, | -> Bubble {
-                                        event_writer.send(ButtonClickEvent);
-                                        return Bubble::Burst;
-                                    }
-                                ),
-                            ));
+                                });
                         });
                 });
         });
+}
+
+fn on_click(mut interaction_query: Query<&Interaction, (Changed<Interaction>, With<Button>)>) {
+    for interaction in interaction_query {
+        match *interaction {
+            Interaction::Clicked => {
+                println!("on clicked");
+            }
+            _ => {}
+        }
+    }
 }
 
 fn on_resize_system(
