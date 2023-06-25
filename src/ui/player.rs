@@ -1,12 +1,17 @@
 use bevy::app::{App, Plugin};
 use bevy::prelude::*;
 use bevy::window::WindowResized;
+use bevy_mod_picking::PickableBundle;
+use bevy_mod_picking::prelude::{Bubble, Click, ListenedEvent, OnPointer, RaycastPickTarget};
 
 pub struct PlayerUiPlugin;
+
+struct ButtonClickEvent;
 
 impl Plugin for PlayerUiPlugin {
     fn build(&self, app: &mut App) {
         app
+            .add_event::<ButtonClickEvent>()
             .add_startup_system(setup_ui)
             .add_system(on_resize_system)
         ;
@@ -16,9 +21,11 @@ impl Plugin for PlayerUiPlugin {
 #[derive(Component)]
 struct ChangingUiPart;
 
-fn setup_ui(mut commands: Commands,
-            asset_server: Res<AssetServer>,
-            query: Query<&Window>) {
+fn setup_ui(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    query: Query<&Window>,
+) {
     let window = query.single();
 
     commands
@@ -79,6 +86,25 @@ fn setup_ui(mut commands: Commands,
                                 // not button/list item text, this is necessary
                                 // for accessibility to treat the text accordingly.
                                 Label,
+                            ));
+
+                            parent.spawn((
+                                ImageBundle {
+                                    image: UiImage {
+                                        texture: asset_server.load("images/button-01.png"),
+                                        ..default()
+                                    },
+                                    ..default()
+                                },
+                                PickableBundle::default(),
+                                RaycastPickTarget::default(),
+                                OnPointer::<Click>::run_callback(
+                                    |In(_): In<ListenedEvent<Click>>,
+                                     mut event_writer: EventWriter<ButtonClickEvent>, | -> Bubble {
+                                        event_writer.send(ButtonClickEvent);
+                                        return Bubble::Burst;
+                                    }
+                                ),
                             ));
                         });
                 });

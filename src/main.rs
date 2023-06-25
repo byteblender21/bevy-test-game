@@ -264,7 +264,7 @@ fn listen_for_route_planning(
     mut events: EventReader<RouteChosenEvent>,
     hex_query: Query<&HexLocation>,
 ) {
-    for event in events.iter() {
+    for _ in events.iter() {
         let start_location = hex_query.get(planner.obj1.unwrap()).unwrap();
         let end_location = hex_query.get(planner.obj2.unwrap()).unwrap();
 
