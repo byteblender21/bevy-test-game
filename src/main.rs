@@ -114,10 +114,11 @@ fn hexagonal_column(hex_layout: &HexLayout) -> Mesh {
 }
 
 #[derive(Debug, Resource)]
-struct Map {
+pub struct Map {
     layout: HexLayout,
     entities: HashMap<Hex, Entity>,
     highlighted_material: Handle<StandardMaterial>,
+    selection_material: Handle<StandardMaterial>,
     default_material: Handle<StandardMaterial>,
 }
 
@@ -156,6 +157,7 @@ fn setup_grid(
     // materials
     let default_material = materials.add(Color::WHITE.into());
     let highlighted_material = materials.add(Color::YELLOW.into());
+    let selection_material = materials.add(Color::AQUAMARINE.into());
     // mesh
     let mesh = hexagonal_column(&layout);
     let mesh_handle = meshes.add(mesh);
@@ -185,6 +187,7 @@ fn setup_grid(
         layout,
         entities,
         highlighted_material,
+        selection_material,
         default_material,
     };
 

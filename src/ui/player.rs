@@ -3,11 +3,14 @@ use std::slice::Windows;
 use bevy::app::{App, Plugin};
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
+use bevy::utils::petgraph::visit::Walker;
 use bevy::window::WindowResized;
 use bevy_mod_picking::debug::PointerDebug;
 use bevy_mod_picking::focus::HoverMap;
 use bevy_mod_picking::PickableBundle;
 use bevy_mod_picking::prelude::{Bubble, Click, ListenedEvent, OnPointer, PointerLocation, RaycastPickTarget};
+use hexx::Hex;
+use crate::{HexLocation, Map};
 
 pub struct PlayerUiPlugin;
 
@@ -22,7 +25,7 @@ impl Plugin for PlayerUiPlugin {
             .add_system(on_building_button_clicked)
             .add_system(
                 show_building_to_place
-                        .run_if(resource_exists::<BuildingPlacement>())
+                    .run_if(resource_exists::<BuildingPlacement>())
             )
         ;
     }
@@ -33,7 +36,7 @@ struct ChangingUiPart;
 
 #[derive(Resource)]
 struct BuildingPlacement {
-    building: Entity
+    building: Entity,
 }
 
 fn setup_ui(
@@ -127,12 +130,32 @@ fn setup_ui(
 fn show_building_to_place(
     mut commands: Commands,
     hover_map: Res<HoverMap>,
-    placement: Res<BuildingPlacement>
+    map: Res<Map>,
+    placement: Res<BuildingPlacement>,
 ) {
     if let Some((_, hit_data)) = hover_map.0.iter().next() {
-        if let Some(hit_value) = hit_data.values().next() {
-            let pos = hit_value.position.unwrap();
-            commands.entity(placement.building).insert(Transform::from_xyz(pos.x, 0.1, pos.z));
+        if let Some((entity, hit_value)) = hit_data.iter().next() {
+            let entries = map.entities
+                .iter()
+                .map(|(hex, e)| {
+                    commands.entity(*e).insert(map.default_material.clone());
+                    return (hex, e);
+                })
+                .filter(|(hex, e)| *e == entity)
+                .collect::<Vec<(&Hex, &Entity)>>();
+
+            if let Some((hex_field, field_entity)) = entries.first() {
+                let pos = hit_value.position.unwrap();
+                commands.entity(placement.building).insert(Transform::from_xyz(pos.x, 0.1, pos.z));
+
+                hex_field.ring(1)
+                    .for_each(|h| {
+                        if let Some(e) = map.entities.get(&h) {
+                            commands.entity(*e).insert(map.selection_material.clone());
+                        }
+                    });
+                commands.entity(**field_entity).insert(map.selection_material.clone());
+            }
         }
     }
 }
@@ -146,7 +169,6 @@ fn on_building_button_clicked(
     for interaction in &mut interaction_query {
         match *interaction {
             Interaction::Clicked => {
-
                 let entity = commands
                     .spawn((
                         PbrBundle {
