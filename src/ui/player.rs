@@ -10,6 +10,7 @@ use bevy_mod_picking::focus::HoverMap;
 use bevy_mod_picking::PickableBundle;
 use bevy_mod_picking::prelude::{Bubble, Click, ListenedEvent, OnPointer, PointerLocation, RaycastPickTarget};
 use hexx::Hex;
+
 use crate::{HexLocation, Map};
 
 pub struct PlayerUiPlugin;
@@ -146,7 +147,9 @@ fn show_building_to_place(
 
             if let Some((hex_field, field_entity)) = entries.first() {
                 let pos = hit_value.position.unwrap();
-                commands.entity(placement.building).insert(Transform::from_xyz(pos.x, 0.1, pos.z));
+                commands.entity(placement.building).insert(
+                    Transform::from_xyz(pos.x, 0.0, pos.z).with_scale(Vec3::splat(0.1))
+                );
 
                 hex_field.ring(1)
                     .for_each(|h| {
@@ -163,22 +166,16 @@ fn show_building_to_place(
 fn on_building_button_clicked(
     mut commands: Commands,
     mut interaction_query: Query<&Interaction, (Changed<Interaction>, With<Button>)>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
 ) {
     for interaction in &mut interaction_query {
         match *interaction {
             Interaction::Clicked => {
                 let entity = commands
                     .spawn((
-                        PbrBundle {
-                            mesh: meshes.add(Mesh::from(shape::Capsule {
-                                radius: 0.1,
-                                depth: 0.4,
-                                ..default()
-                            })),
-                            material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-                            transform: Transform::from_xyz(0.0, 0.1, 0.0),
+                        SceneBundle {
+                            scene: asset_server.load("models/tower-001.gltf#Scene0"),
+                            transform: Transform::from_scale(Vec3::splat(100.0)),
                             ..default()
                         },
                     )).id();
