@@ -10,6 +10,7 @@ use bevy::prelude::*;
 use bevy::render::mesh::Indices;
 use bevy::render::render_resource::PrimitiveTopology;
 use bevy::time::common_conditions::on_timer;
+use bevy_editor_pls::EditorPlugin;
 use bevy_mod_picking::{DefaultPickingPlugins, PickableBundle};
 use bevy_mod_picking::debug::DebugPickingPlugin;
 use bevy_mod_picking::event_listening::{Bubble, ListenedEvent, OnPointer};
@@ -83,6 +84,7 @@ fn main() {
                 .disable::<DefaultHighlightingPlugin>()
                 .disable::<DebugPickingPlugin>(),
         )
+        .add_plugin(EditorPlugin::default())
         // This plugin maps inputs to an input-type agnostic action-state
         // We need to provide it with an enum which stores the possible actions a player could take
         .add_plugin(InputManagerPlugin::<Action>::default())
