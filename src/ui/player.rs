@@ -174,7 +174,7 @@ fn on_building_button_clicked(
                 let entity = commands
                     .spawn((
                         SceneBundle {
-                            scene: asset_server.load("models/tower-001.gltf#Scene0"),
+                            scene: asset_server.load("models/tower-001.glb#Scene0"),
                             transform: Transform::from_scale(Vec3::splat(100.0)),
                             ..default()
                         },
