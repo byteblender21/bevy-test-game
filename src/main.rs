@@ -179,6 +179,7 @@ fn setup_grid(
                     PickableBundle::default(),
                     RaycastPickTarget::default(),
                     OnPointer::<Click>::run_callback(on_hex_clicked),
+                    Name::from(format!("Hex ({}/{})", hex.x, hex.y))
                 ))
                 .id();
             (hex, id)
