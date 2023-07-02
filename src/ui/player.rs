@@ -41,6 +41,7 @@ struct ChangingUiPart;
 
 #[derive(Resource)]
 struct BuildingPlacement {
+    first_click: bool,
     building: Entity,
 }
 
@@ -134,13 +135,20 @@ fn setup_ui(
 
 fn on_hex_field_click(
     mut commands: Commands,
-    field_click_reader: EventReader<HexFieldClicked>,
+    mut field_click_reader: EventReader<HexFieldClicked>,
+    mut placement: ResMut<BuildingPlacement>,
 ) {
     if field_click_reader.is_empty() {
         return;
     }
 
-    commands.remove_resource::<BuildingPlacement>();
+    field_click_reader.clear();
+
+    if placement.first_click {
+        placement.first_click = false;
+    } else {
+        commands.remove_resource::<BuildingPlacement>();
+    }
 }
 
 fn show_building_to_place(
@@ -196,6 +204,7 @@ fn on_building_button_clicked(
                     )).id();
 
                 commands.insert_resource(BuildingPlacement {
+                    first_click: true,
                     building: entity
                 });
             }

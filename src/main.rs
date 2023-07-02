@@ -11,7 +11,7 @@ use bevy::render::mesh::Indices;
 use bevy::render::render_resource::PrimitiveTopology;
 use bevy::time::common_conditions::on_timer;
 use bevy_editor_pls::EditorPlugin;
-use bevy_mod_picking::{DefaultPickingPlugins, PickableBundle};
+use bevy_mod_picking::{DefaultPickingPlugins, low_latency_window_plugin, PickableBundle};
 use bevy_mod_picking::debug::DebugPickingPlugin;
 use bevy_mod_picking::event_listening::{Bubble, ListenedEvent, OnPointer};
 use bevy_mod_picking::events::Click;
@@ -78,7 +78,7 @@ fn main() {
     App::new()
         .add_plugin(GameMenuPlugin)
         .add_plugin(PlayerUiPlugin)
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(low_latency_window_plugin()))
         .add_plugins(
             DefaultPickingPlugins
                 .build()
