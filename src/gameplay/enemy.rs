@@ -1,3 +1,5 @@
+use std::ops::{Add, Mul};
+
 use bevy::app::App;
 use bevy::core::Name;
 use bevy::prelude::*;
@@ -13,6 +15,7 @@ impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_startup_system(spawn_enemy.in_base_set(StartupSet::PostStartup))
+            .add_system(enemy_walking)
         ;
     }
 }
@@ -23,6 +26,7 @@ pub struct EnemyTag;
 #[derive(Component)]
 pub struct WalkingPath {
     path: Vec<Hex>,
+    next_location: Hex,
 }
 
 fn spawn_enemy(
@@ -63,11 +67,16 @@ fn spawn_enemy(
         })
     }
 
+    let first_field = *full_path.get(1).unwrap();
+
     commands.spawn((
         Name::from("Enemy"),
         EnemyTag,
-        HexLocation { location: initial_hex_field, },
-
+        HexLocation { location: initial_hex_field },
+        WalkingPath {
+            path: full_path,
+            next_location: first_field,
+        },
         PbrBundle {
             mesh: meshes.add(Mesh::from(shape::Capsule {
                 radius: 0.1,
@@ -79,4 +88,51 @@ fn spawn_enemy(
             ..default()
         },
     ));
+}
+
+fn enemy_walking(
+    mut enemies: Query<(&mut Transform, &mut WalkingPath, &mut HexLocation), (With<EnemyTag>)>,
+    time: Res<Time>,
+    map: Res<Map>,
+) {
+    for (mut transform, mut walking_path, mut location) in &mut enemies {
+        let mut current_pos = transform.translation;
+
+        let next_location = walking_path.next_location;
+        let future_pos = map.layout.hex_to_world_pos(next_location);
+
+        let movement_vec = Vec3::new(
+            future_pos.x - current_pos.x,
+            0.0,
+            future_pos.y - current_pos.z,
+        );
+
+        if approximate_pos(movement_vec) == Vec3::ZERO {
+            location.location = next_location;
+            let mut updated_next_location: Option<Hex> = None;
+
+            walking_path.path.windows(2).for_each(|two| {
+                let h1 = two.first().unwrap();
+                let h2 = two.last().unwrap();
+
+                if next_location == *h1 {
+                    updated_next_location = Some(*h2);
+                }
+            });
+
+            if let Some(next_location) = updated_next_location {
+                walking_path.next_location = next_location;
+            }
+        } else {
+            transform.translation = current_pos.add(movement_vec.mul(time.delta_seconds() * 2.1));
+        }
+    }
+}
+
+fn approximate_pos(input: Vec3) -> Vec3 {
+    return Vec3::new(
+        (input.x * 7.0).trunc(),
+        (input.y * 7.0).trunc(),
+        (input.z * 7.0).trunc(),
+    );
 }
