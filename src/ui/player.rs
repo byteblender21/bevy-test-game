@@ -41,7 +41,6 @@ struct ChangingUiPart;
 
 #[derive(Resource)]
 struct BuildingPlacement {
-    first_click: bool,
     building: Entity,
 }
 
@@ -147,25 +146,21 @@ fn on_hex_field_click(
 
     let event = field_click_reader.iter().next().unwrap();
 
-    if placement.first_click {
-        placement.first_click = false;
-    } else {
-        let world_pos = map.layout.hex_to_world_pos(event.0);
-        let obj_entity = placement.building;
+    let world_pos = map.layout.hex_to_world_pos(event.0);
+    let obj_entity = placement.building;
 
-        commands.entity(obj_entity).insert(
-            Transform::from_xyz(world_pos.x, 0.0, world_pos.y).with_scale(BUILDING_SCALING)
-        );
+    commands.entity(obj_entity).insert(
+        Transform::from_xyz(world_pos.x, 0.0, world_pos.y).with_scale(BUILDING_SCALING)
+    );
 
-        // clear all fields again
-        map.entities
-            .iter()
-            .for_each(|(hex, e)| {
-                commands.entity(*e).insert(map.default_material.clone());
-            });
+    // clear all fields again
+    map.entities
+        .iter()
+        .for_each(|(hex, e)| {
+            commands.entity(*e).insert(map.default_material.clone());
+        });
 
-        commands.remove_resource::<BuildingPlacement>();
-    }
+    commands.remove_resource::<BuildingPlacement>();
 }
 
 fn show_building_to_place(
@@ -221,7 +216,6 @@ fn on_building_button_clicked(
                     )).id();
 
                 commands.insert_resource(BuildingPlacement {
-                    first_click: true,
                     building: entity
                 });
             }
