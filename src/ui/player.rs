@@ -11,7 +11,7 @@ use bevy_mod_picking::PickableBundle;
 use bevy_mod_picking::prelude::{Bubble, Click, ListenedEvent, OnPointer, PointerLocation, RaycastPickTarget};
 use hexx::Hex;
 
-use crate::{HexLocation, Map};
+use crate::{HexFieldClicked, HexLocation, Map};
 
 pub struct PlayerUiPlugin;
 
@@ -26,6 +26,10 @@ impl Plugin for PlayerUiPlugin {
             .add_system(on_building_button_clicked)
             .add_system(
                 show_building_to_place
+                    .run_if(resource_exists::<BuildingPlacement>())
+            )
+            .add_system(
+                on_hex_field_click
                     .run_if(resource_exists::<BuildingPlacement>())
             )
         ;
@@ -126,6 +130,17 @@ fn setup_ui(
                         });
                 });
         });
+}
+
+fn on_hex_field_click(
+    mut commands: Commands,
+    field_click_reader: EventReader<HexFieldClicked>,
+) {
+    if field_click_reader.is_empty() {
+        return;
+    }
+
+    commands.remove_resource::<BuildingPlacement>();
 }
 
 fn show_building_to_place(

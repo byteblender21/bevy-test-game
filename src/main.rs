@@ -72,6 +72,7 @@ struct RoutePlanner {
 }
 
 struct RouteChosenEvent;
+pub struct HexFieldClicked(Hex, Entity);
 
 fn main() {
     App::new()
@@ -93,6 +94,7 @@ fn main() {
                 .run_if(resource_not_exists::<GameMenu>())
         )
         .add_event::<RouteChosenEvent>()
+        .add_event::<HexFieldClicked>()
         .add_system(
             listen_for_route_planning
                 .run_if(resource_exists::<RoutePlanner>())
@@ -179,6 +181,9 @@ fn setup_grid(
                     PickableBundle::default(),
                     RaycastPickTarget::default(),
                     OnPointer::<Click>::run_callback(on_hex_clicked),
+                    HexLocation {
+                        location: hex,
+                    },
                     Name::from(format!("Hex ({}/{})", hex.x, hex.y))
                 ))
                 .id();
@@ -239,7 +244,11 @@ fn on_hex_clicked(
     In(event): In<ListenedEvent<Click>>,
     mut commands: Commands,
     map: Res<Map>,
+    mut event_writer: EventWriter<HexFieldClicked>,
+    q: Query<&HexLocation>
 ) -> Bubble {
+    let hex_field = q.get_component::<HexLocation>(event.target).unwrap();
+    event_writer.send(HexFieldClicked(hex_field.location, event.target));
     commands.entity(event.target).insert(map.highlighted_material.clone());
     return Bubble::Burst;
 }
