@@ -3,6 +3,7 @@ use std::f32::consts::PI;
 use std::time::Duration;
 
 use bevy::a11y::AccessKitEntityExt;
+use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::ecs::archetype::Archetypes;
 use bevy::ecs::component::ComponentId;
 use bevy::ecs::system::EntityCommands;
@@ -10,6 +11,7 @@ use bevy::prelude::*;
 use bevy::render::mesh::Indices;
 use bevy::render::render_resource::PrimitiveTopology;
 use bevy::time::common_conditions::on_timer;
+use bevy::window::{PresentMode, WindowMode};
 use bevy_editor_pls::EditorPlugin;
 use bevy_mod_picking::{DefaultPickingPlugins, low_latency_window_plugin, PickableBundle};
 use bevy_mod_picking::debug::DebugPickingPlugin;
@@ -62,7 +64,7 @@ struct PlayerCamera;
 
 #[derive(Component, Debug)]
 struct HexLocation {
-    location: Hex
+    location: Hex,
 }
 
 #[derive(Resource)]
@@ -72,6 +74,7 @@ struct RoutePlanner {
 }
 
 struct RouteChosenEvent;
+
 pub struct HexFieldClicked(Hex, Entity);
 
 fn main() {
@@ -79,6 +82,8 @@ fn main() {
         .add_plugin(GameMenuPlugin)
         .add_plugin(PlayerUiPlugin)
         .add_plugins(DefaultPlugins.set(low_latency_window_plugin()))
+        // .add_plugin(FrameTimeDiagnosticsPlugin)
+        // .add_plugin(LogDiagnosticsPlugin::default())
         .add_plugins(
             DefaultPickingPlugins
                 .build()
@@ -89,10 +94,6 @@ fn main() {
         // This plugin maps inputs to an input-type agnostic action-state
         // We need to provide it with an enum which stores the possible actions a player could take
         .add_plugin(InputManagerPlugin::<Action>::default())
-        .add_system(
-            move_camera
-                .run_if(resource_not_exists::<GameMenu>())
-        )
         .add_event::<RouteChosenEvent>()
         .add_event::<HexFieldClicked>()
         .add_system(
@@ -100,9 +101,15 @@ fn main() {
                 .run_if(resource_exists::<RoutePlanner>())
         )
         // setup env
+        .add_startup_system(setup_window)
         .add_startup_system(setup)
         .add_startup_system(setup_grid)
         .run();
+}
+
+fn setup_window(mut windows: Query<&mut Window>) {
+    let mut window = windows.single_mut();
+    window.set_maximized(true);
 }
 
 fn hexagonal_column(hex_layout: &HexLayout) -> Mesh {
@@ -243,7 +250,7 @@ fn spawn_stuff(map: &Map,
 fn on_hex_clicked(
     In(event): In<ListenedEvent<Click>>,
     mut event_writer: EventWriter<HexFieldClicked>,
-    q: Query<&HexLocation>
+    q: Query<&HexLocation>,
 ) -> Bubble {
     let hex_field = q.get_component::<HexLocation>(event.target).unwrap();
     event_writer.send(HexFieldClicked(hex_field.location, event.target));
@@ -255,7 +262,7 @@ fn on_object_clicked(
     mut commands: Commands,
     map: Res<Map>,
     mut planner: ResMut<RoutePlanner>,
-    mut planner_event_writer: EventWriter<RouteChosenEvent>
+    mut planner_event_writer: EventWriter<RouteChosenEvent>,
 ) -> Bubble {
     commands.entity(event.target).insert(map.highlighted_material.clone());
 
@@ -309,58 +316,6 @@ fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
-    // commands.spawn(SceneBundle {
-    //     scene: asset_server.load("models/house.gltf#Scene0"),
-    //     transform: Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3 {
-    //         x: 0.25,
-    //         y: 0.25,
-    //         z: 0.25,
-    //     }),
-    //     ..default()
-    // });
-
-    let mut input_map = InputMap::new(
-        [
-            (KeyCode::Space, Action::Jump),
-        ]
-    );
-
-    input_map
-        .insert_many_to_one(
-            [
-                InputKind::MouseMotion(MouseMotionDirection::Left),
-                InputKind::Keyboard(KeyCode::Left),
-            ],
-            Action::MoveLeft,
-        );
-
-    input_map
-        .insert_many_to_one(
-            [
-                InputKind::MouseMotion(MouseMotionDirection::Right),
-                InputKind::Keyboard(KeyCode::Right),
-            ],
-            Action::MoveRight,
-        );
-
-    input_map
-        .insert_many_to_one(
-            [
-                InputKind::MouseMotion(MouseMotionDirection::Down),
-                InputKind::Keyboard(KeyCode::Up),
-            ],
-            Action::MoveForward,
-        );
-
-    input_map
-        .insert_many_to_one(
-            [
-                InputKind::MouseMotion(MouseMotionDirection::Up),
-                InputKind::Keyboard(KeyCode::Down),
-            ],
-            Action::MoveBack,
-        );
-
     commands
         .spawn((
             Camera3dBundle {
@@ -369,32 +324,7 @@ fn setup(
             },
             RaycastPickCamera::default(),
             PlayerCamera,
-        ))
-        .insert(InputManagerBundle::<Action> {
-            // Stores "which actions are currently pressed"
-            action_state: ActionState::default(),
-            // Describes how to convert from player inputs into those actions
-            input_map,
-        });
+        ));
 }
 
 const ACCELERATION: f32 = 0.9;
-
-// Query for the `ActionState` component in your game logic systems!
-fn move_camera(
-    time: Res<Time>,
-    mut query: Query<(&ActionState<Action>, &mut Transform), With<PlayerCamera>>,
-) {
-    let (action_state, mut transform) = query.single_mut();
-    if action_state.pressed(Action::MoveLeft) {
-        transform.translation.x -= (ACCELERATION * time.delta_seconds());
-    } else if action_state.pressed(Action::MoveRight) {
-        transform.translation.x += (ACCELERATION * time.delta_seconds());
-    }
-
-    if action_state.pressed(Action::MoveForward) {
-        transform.translation.z -= (ACCELERATION * time.delta_seconds());
-    } else if action_state.pressed(Action::MoveBack) {
-        transform.translation.z += (ACCELERATION * time.delta_seconds());
-    }
-}
