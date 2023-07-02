@@ -242,14 +242,11 @@ fn spawn_stuff(map: &Map,
 
 fn on_hex_clicked(
     In(event): In<ListenedEvent<Click>>,
-    mut commands: Commands,
-    map: Res<Map>,
     mut event_writer: EventWriter<HexFieldClicked>,
     q: Query<&HexLocation>
 ) -> Bubble {
     let hex_field = q.get_component::<HexLocation>(event.target).unwrap();
     event_writer.send(HexFieldClicked(hex_field.location, event.target));
-    commands.entity(event.target).insert(map.highlighted_material.clone());
     return Bubble::Burst;
 }
 

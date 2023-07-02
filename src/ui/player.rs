@@ -45,6 +45,8 @@ struct BuildingPlacement {
     building: Entity,
 }
 
+const BUILDING_SCALING: Vec3 = Vec3::splat(0.1);
+
 fn setup_ui(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -135,6 +137,7 @@ fn setup_ui(
 
 fn on_hex_field_click(
     mut commands: Commands,
+    map: Res<Map>,
     mut field_click_reader: EventReader<HexFieldClicked>,
     mut placement: ResMut<BuildingPlacement>,
 ) {
@@ -142,11 +145,25 @@ fn on_hex_field_click(
         return;
     }
 
-    field_click_reader.clear();
+    let event = field_click_reader.iter().next().unwrap();
 
     if placement.first_click {
         placement.first_click = false;
     } else {
+        let world_pos = map.layout.hex_to_world_pos(event.0);
+        let obj_entity = placement.building;
+
+        commands.entity(obj_entity).insert(
+            Transform::from_xyz(world_pos.x, 0.0, world_pos.y).with_scale(BUILDING_SCALING)
+        );
+
+        // clear all fields again
+        map.entities
+            .iter()
+            .for_each(|(hex, e)| {
+                commands.entity(*e).insert(map.default_material.clone());
+            });
+
         commands.remove_resource::<BuildingPlacement>();
     }
 }
@@ -171,7 +188,7 @@ fn show_building_to_place(
             if let Some((hex_field, field_entity)) = entries.first() {
                 let pos = hit_value.position.unwrap();
                 commands.entity(placement.building).insert(
-                    Transform::from_xyz(pos.x, 0.0, pos.z).with_scale(Vec3::splat(0.1))
+                    Transform::from_xyz(pos.x, 0.0, pos.z).with_scale(BUILDING_SCALING)
                 );
 
                 hex_field.ring(1)
