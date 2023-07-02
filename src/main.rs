@@ -26,12 +26,14 @@ use leafwing_input_manager::buttonlike::MouseMotionDirection;
 use leafwing_input_manager::prelude::*;
 use leafwing_input_manager::user_input::InputKind;
 use rand::Rng;
+use crate::gameplay::enemy::EnemyPlugin;
 
 use crate::ui::menu::{GameMenu, GameMenuPlugin, resource_not_exists};
 use crate::ui::player::PlayerUiPlugin;
 
 mod ui;
 mod state;
+mod gameplay;
 
 /// World size of the hexagons (outer radius)
 const HEX_SIZE: Vec2 = Vec2::splat(1.0);
@@ -81,6 +83,7 @@ fn main() {
     App::new()
         .add_plugin(GameMenuPlugin)
         .add_plugin(PlayerUiPlugin)
+        .add_plugin(EnemyPlugin)
         .add_plugins(DefaultPlugins.set(low_latency_window_plugin()))
         // .add_plugin(FrameTimeDiagnosticsPlugin)
         // .add_plugin(LogDiagnosticsPlugin::default())
