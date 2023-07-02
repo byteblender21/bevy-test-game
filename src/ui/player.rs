@@ -215,7 +215,7 @@ fn on_building_button_clicked(
                     .spawn((
                         SceneBundle {
                             scene: asset_server.load("models/tower-001.glb#Scene0"),
-                            transform: Transform::from_scale(Vec3::splat(100.0)),
+                            transform: Transform::from_scale(Vec3::splat(0.0)),
                             ..default()
                         },
                     )).id();

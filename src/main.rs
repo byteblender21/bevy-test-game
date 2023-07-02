@@ -173,7 +173,7 @@ fn setup_grid(
     let mesh = hexagonal_column(&layout);
     let mesh_handle = meshes.add(mesh);
 
-    let entities = shapes::hexagon(Hex::ZERO, 10)
+    let entities = shapes::hexagon(Hex::ZERO, 13)
         .map(|hex| {
             let pos = layout.hex_to_world_pos(hex);
             let id = commands
@@ -299,18 +299,6 @@ fn listen_for_route_planning(
     }
 }
 
-// fn get_components_for_entity<'a>(
-//     entity: &Entity,
-//     archetypes: &'a Archetypes,
-// ) -> Option<impl Iterator<Item = ComponentId> + 'a> {
-//     for archetype in archetypes.iter() {
-//         if archetype.entities().iter().any(|e| e.entity() == entity) {
-//             return Some(archetype.components());
-//         }
-//     }
-//     None
-// }
-
 /// set up a simple 3D scene
 fn setup(
     mut commands: Commands,
@@ -318,7 +306,7 @@ fn setup(
     commands
         .spawn((
             Camera3dBundle {
-                transform: Transform::from_xyz(-4.0, 8.5, 9.0)
+                transform: Transform::from_xyz(-4.0, 8.5, 13.0)
                     .looking_at(Vec3::new(0.0, 0.0, 2.0), Vec3::Y),
                 ..default()
             },
@@ -326,5 +314,3 @@ fn setup(
             PlayerCamera,
         ));
 }
-
-const ACCELERATION: f32 = 0.9;
