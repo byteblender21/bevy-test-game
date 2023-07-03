@@ -26,8 +26,9 @@ use leafwing_input_manager::buttonlike::MouseMotionDirection;
 use leafwing_input_manager::prelude::*;
 use leafwing_input_manager::user_input::InputKind;
 use rand::Rng;
-use crate::gameplay::enemy::EnemyPlugin;
 
+use crate::gameplay::buildings::BuildingPlugin;
+use crate::gameplay::enemy::EnemyPlugin;
 use crate::ui::menu::{GameMenu, GameMenuPlugin, resource_not_exists};
 use crate::ui::player::PlayerUiPlugin;
 
@@ -84,6 +85,7 @@ fn main() {
         .add_plugin(GameMenuPlugin)
         .add_plugin(PlayerUiPlugin)
         .add_plugin(EnemyPlugin)
+        .add_plugin(BuildingPlugin)
         .add_plugins(DefaultPlugins.set(low_latency_window_plugin()))
         // .add_plugin(FrameTimeDiagnosticsPlugin)
         // .add_plugin(LogDiagnosticsPlugin::default())
