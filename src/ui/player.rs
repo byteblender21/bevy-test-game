@@ -12,6 +12,7 @@ use bevy_mod_picking::prelude::{Bubble, Click, ListenedEvent, OnPointer, Pointer
 use hexx::Hex;
 
 use crate::{HexFieldClicked, HexLocation, Map};
+use crate::gameplay::buildings::BuildingTag;
 
 pub struct PlayerUiPlugin;
 
@@ -149,9 +150,11 @@ fn on_hex_field_click(
     let world_pos = map.layout.hex_to_world_pos(event.0);
     let obj_entity = placement.building;
 
-    commands.entity(obj_entity).insert(
-        Transform::from_xyz(world_pos.x, 0.0, world_pos.y).with_scale(BUILDING_SCALING)
-    );
+    commands.entity(obj_entity)
+        .insert((
+            BuildingTag,
+            Transform::from_xyz(world_pos.x, 0.0, world_pos.y).with_scale(BUILDING_SCALING),
+        ));
 
     // clear all fields again
     map.entities
