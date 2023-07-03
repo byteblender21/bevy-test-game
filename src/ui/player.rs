@@ -1,4 +1,5 @@
 use std::slice::Windows;
+use std::time::Duration;
 
 use bevy::app::{App, Plugin};
 use bevy::input::mouse::MouseMotion;
@@ -12,7 +13,7 @@ use bevy_mod_picking::prelude::{Bubble, Click, ListenedEvent, OnPointer, Pointer
 use hexx::Hex;
 
 use crate::{HexFieldClicked, HexLocation, Map};
-use crate::gameplay::buildings::BuildingTag;
+use crate::gameplay::buildings::{BuildingTag, HasAttack};
 
 pub struct PlayerUiPlugin;
 
@@ -153,6 +154,9 @@ fn on_hex_field_click(
     commands.entity(obj_entity)
         .insert((
             BuildingTag,
+            HasAttack {
+                timer: Timer::new(Duration::from_millis(800), TimerMode::Repeating),
+            },
             Transform::from_xyz(world_pos.x, 0.0, world_pos.y).with_scale(BUILDING_SCALING),
         ));
 
