@@ -19,6 +19,7 @@ use bevy_mod_picking::event_listening::{Bubble, ListenedEvent, OnPointer};
 use bevy_mod_picking::events::Click;
 use bevy_mod_picking::highlight::DefaultHighlightingPlugin;
 use bevy_mod_picking::prelude::{RaycastPickCamera, RaycastPickTarget};
+use bevy_rapier3d::prelude::{NoUserData, RapierDebugRenderPlugin, RapierPhysicsPlugin, RigidBody};
 use hexx::*;
 use hexx::algorithms::a_star;
 use hexx::shapes;
@@ -87,6 +88,8 @@ fn main() {
         .add_plugin(EnemyPlugin)
         .add_plugin(BuildingPlugin)
         .add_plugins(DefaultPlugins.set(low_latency_window_plugin()))
+        .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
+        .add_plugin(RapierDebugRenderPlugin::default())
         // .add_plugin(FrameTimeDiagnosticsPlugin)
         // .add_plugin(LogDiagnosticsPlugin::default())
         .add_plugins(

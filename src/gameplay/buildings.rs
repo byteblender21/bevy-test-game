@@ -1,5 +1,6 @@
 use std::time::Duration;
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::{ActiveEvents, Collider, RigidBody};
 
 pub struct BuildingPlugin;
 
@@ -42,8 +43,8 @@ fn building_shooting(
             commands.spawn((
                 Name::from("Bullet"),
                 Bullet {
-                    speed: 0.2,
-                    life_timer: Timer::new(Duration::from_millis(300), TimerMode::Once),
+                    speed: 0.01,
+                    life_timer: Timer::new(Duration::from_millis(11300), TimerMode::Once),
                 },
                 PbrBundle {
                     mesh: meshes.add(Mesh::from(shape::UVSphere {
@@ -54,6 +55,7 @@ fn building_shooting(
                     transform: Transform::from_xyz(transform.translation.x, 0.3, transform.translation.z),
                     ..default()
                 },
+                Collider::ball(0.8),
             ));
         }
     });

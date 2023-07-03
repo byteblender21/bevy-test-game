@@ -4,6 +4,7 @@ use bevy::app::App;
 use bevy::core::Name;
 use bevy::prelude::*;
 use bevy::utils::default;
+use bevy_rapier3d::prelude::{ActiveEvents, Collider, CollisionEvent, Friction, GravityScale, RigidBody, Sensor};
 use hexx::algorithms::a_star;
 use hexx::Hex;
 
@@ -20,6 +21,7 @@ impl Plugin for EnemyPlugin {
             .add_startup_system(spawn_initial_enemy.in_base_set(StartupSet::PostStartup))
             .add_system(enemy_walking)
             .add_system(handle_enemy_events)
+            .add_system(collision_event_handler)
         ;
     }
 }
@@ -88,7 +90,7 @@ fn enemy_walking(
             }
 
         } else {
-            transform.translation = current_pos.add(movement_vec.mul(time.delta_seconds() * 2.1));
+            transform.translation = current_pos.add(movement_vec.mul(time.delta_seconds() * 1.1));
         }
     }
 }
@@ -179,5 +181,17 @@ fn spawn_enemy(
             transform: Transform::from_xyz(world_pos.x, 0.1, world_pos.y),
             ..default()
         },
+        Collider::ball(0.5),
+        RigidBody::Dynamic,
+        GravityScale(0.0),
+        ActiveEvents::COLLISION_EVENTS
     ));
+}
+
+fn collision_event_handler(mut event_reader: EventReader<CollisionEvent>) {
+    event_reader.iter().for_each(|e| {
+        if CollisionEvent::Started(e1, e2, _) = *e {
+            //
+        }
+    })
 }
